@@ -11,9 +11,9 @@ interface IERC20 {
     function allowance(
         address owner,
         address spender
-    ) external view returns (uint256); // Add this line
+    ) external view returns (uint256);
 
-    function approve(address spender, uint256 amount) external returns (bool); // Optionally add this line if needed
+    function approve(address spender, uint256 amount) external returns (bool);
 }
 
 contract Payment {
@@ -22,8 +22,10 @@ contract Payment {
 
     struct Transaction {
         address buyer;
+        string sellerPublicEmail;
+        string orderRef;
         uint256 amount;
-        string gameId;
+        string[] gameId;
         uint256 timestamp;
     }
 
@@ -32,7 +34,7 @@ contract Payment {
     event PaymentMade(
         address indexed buyer,
         uint256 amount,
-        string gameId,
+        string[] gameId,
         uint256 timestamp
     );
 
@@ -58,7 +60,12 @@ contract Payment {
         );
     }
 
-    function payForGame(string memory _gameId, uint256 _amount) public {
+    function payForGame(
+        string memory _sellerPublicEmail,
+        string memory _orderRef,
+        string[] memory _gameId,
+        uint256 _amount
+    ) public {
         require(_amount > 0, "Amount must be greater than zero");
 
         uint256 allowance = usdtToken.allowance(msg.sender, address(this));
@@ -74,6 +81,8 @@ contract Payment {
         transactions.push(
             Transaction({
                 buyer: msg.sender,
+                sellerPublicEmail: _sellerPublicEmail,
+                orderRef: _orderRef,
                 amount: _amount,
                 gameId: _gameId,
                 timestamp: block.timestamp
@@ -83,17 +92,39 @@ contract Payment {
         emit PaymentMade(msg.sender, _amount, _gameId, block.timestamp);
     }
 
-    // Retrieve a specific transaction
-    function getTransaction(
-        uint256 _index
-    ) public view returns (address, uint256, string memory, uint256) {
-        Transaction memory transaction = transactions[_index];
-        return (
-            transaction.buyer,
-            transaction.amount,
-            transaction.gameId,
-            transaction.timestamp
-        );
+    // Retrieve a specific transaction by orderRef
+    function getTransactionByOrderRef(
+        string memory _orderRef
+    )
+        public
+        view
+        returns (
+            address,
+            string memory,
+            string memory,
+            uint256,
+            string[] memory,
+            uint256
+        )
+    {
+        for (uint256 i = 0; i < transactions.length; i++) {
+            if (
+                keccak256(abi.encodePacked(transactions[i].orderRef)) ==
+                keccak256(abi.encodePacked(_orderRef))
+            ) {
+                Transaction memory transaction = transactions[i];
+                return (
+                    transaction.buyer,
+                    transaction.sellerPublicEmail,
+                    transaction.orderRef,
+                    transaction.amount,
+                    transaction.gameId,
+                    transaction.timestamp
+                );
+            }
+        }
+
+        revert("Transaction not found");
     }
 
     // Get the number of transactions

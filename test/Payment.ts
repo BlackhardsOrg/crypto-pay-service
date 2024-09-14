@@ -68,7 +68,12 @@ describe("Payment Contract", function () {
     await usdtToken.connect(buyer).approve(PaymentAddress, amountToPay);
 
     // Call payForGame function
-    await Payment.connect(buyer).payForGame(gameId, amountToPay);
+    await Payment.connect(buyer).payForGame(
+      "norbertmbafrank@gmail.com",
+      "123",
+      [gameId],
+      amountToPay
+    );
     // await expect(Payment.connect(buyer).payForGame(gameId, amountToPay))
     //   .to.emit(Payment, "PaymentMade")
     //   .withArgs(
@@ -87,13 +92,13 @@ describe("Payment Contract", function () {
     expect(marketplaceBalance).to.equal(amountToPay);
 
     // Check if the transaction is recorded
-    const transaction = await Payment.getTransaction(0);
+    const transactionOrder = await Payment.getTransactionByOrderRef("123");
     // expect(transaction.buyer).to.equal(buyer.address);
-    console.log(transaction[1], "TRANSACTIONS", amountToPay);
+    console.log(transactionOrder, "TRANSACTIONS", amountToPay);
 
-    expect(transaction[1]).to.equal(amountToPay);
+    expect(transactionOrder[3]).to.equal(amountToPay);
 
-    expect(transaction[2]).to.equal(gameId);
+    expect(transactionOrder[4][0]).to.equal(gameId);
   });
 
   it("should not allow payment if allowance is too low", async function () {
@@ -107,7 +112,12 @@ describe("Payment Contract", function () {
 
     // Attempt to pay for the game, expecting a revert
     await expect(
-      Payment.connect(buyer).payForGame(gameId, amountToPay)
+      Payment.connect(buyer).payForGame(
+        "norbertmbafrank@gmail.com",
+        "123",
+        [gameId],
+        amountToPay
+      )
     ).to.be.revertedWith("Token allowance too low");
   });
 });
