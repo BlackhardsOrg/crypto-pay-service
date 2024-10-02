@@ -1,10 +1,11 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { Contract } from "ethers";
+import { Payment, USDT } from "../typechain-types";
 
 describe("Payment Contract", function () {
-  let Payment: Contract;
-  let usdtToken: Contract;
+  let Payment: Payment;
+  let usdtToken: USDT;
   let owner: any;
   let buyer: any;
   let marketplaceEOA: any;
@@ -18,12 +19,7 @@ describe("Payment Contract", function () {
     usdtToken = await MockERC20.deploy(ethers.parseUnits("10000", 6));
     await usdtToken.waitForDeployment();
     let usdtAddress = await usdtToken.getAddress();
-    console.log(
-      usdtAddress,
-      "USDT TOKEN",
-      marketplaceEOA.address,
-      buyer.address
-    );
+    
     // Deploy the Payment contract
     const PaymentContract = await ethers.getContractFactory("Payment");
     Payment = await PaymentContract.deploy(usdtAddress, marketplaceEOA.address);
@@ -53,10 +49,7 @@ describe("Payment Contract", function () {
 
     // Check that the allowance is correctly set
     const allowance = await usdtToken.allowance(buyer.address, PaymentAddress);
-    console.log(
-      "ALLOWANCE " + allowance,
-      "AMOUNT TO APPROVE " + amountToApprove
-    );
+
     expect(allowance).to.equal(amountToApprove);
   });
 
